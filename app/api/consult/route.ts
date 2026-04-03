@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { runConsultAnalysis } from "@/lib/consult-analysis";
 import { emitNewConsult } from "@/lib/socket-server";
 
 export async function GET() {
@@ -37,6 +38,8 @@ export async function POST(request: Request) {
     });
 
     emitNewConsult(consult);
+
+    void runConsultAnalysis(consult.id, consult.description);
 
     return NextResponse.json(consult, { status: 201 });
   } catch {

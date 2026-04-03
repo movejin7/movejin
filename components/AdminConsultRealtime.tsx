@@ -11,6 +11,10 @@ type Consult = {
   description: string;
   status: "PENDING" | "COMPLETED" | "CANCELLED";
   createdAt: string;
+  analysisCategory: string | null;
+  analysisSummary: string | null;
+  analysisUrgency: "LOW" | "MEDIUM" | "HIGH" | null;
+  analysisStatus: "PENDING" | "COMPLETED" | "FAILED";
 };
 
 type AdminConsultRealtimeProps = {
@@ -42,6 +46,15 @@ export default function AdminConsultRealtime({ initialConsults }: AdminConsultRe
         return [newConsult, ...prev];
       });
       setNotification(`New consult created: ${newConsult.category}`);
+    });
+
+    socket.on("consult-updated", (updatedConsult: Consult) => {
+      setConsults((prev) =>
+        prev.map((consult) => (consult.id === updatedConsult.id ? { ...consult, ...updatedConsult } : consult))
+      );
+      if (updatedConsult.analysisStatus === "COMPLETED") {
+        setNotification(`AI analysis completed: ${updatedConsult.category}`);
+      }
     });
 
     return () => {
@@ -102,7 +115,7 @@ export default function AdminConsultRealtime({ initialConsults }: AdminConsultRe
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-900">Consult List</h2>
-          <span className="text-sm text-slate-500">Prisma + Socket.IO</span>
+          <span className="text-sm text-slate-500">Prisma + Socket.IO + OpenAI</span>
         </div>
         <Table
           rowKey="id"
@@ -112,19 +125,46 @@ export default function AdminConsultRealtime({ initialConsults }: AdminConsultRe
             { key: "category", header: "Category" },
             { key: "description", header: "Description" },
             {
-              key: "createdAt",
-              header: "Created At",
-              render: (value) => formatDate(String(value))
+              key: "analysisCategory",
+              header: "AI Category",
+              render: (value) => String(value ?? "-")
             },
             {
-              key: "status",
-              header: "Status",
+              key: "analysisSummary",
+              header: "AI Summary",
+              render: (value) => String(value ?? "Analyzing...")
+            },
+            {
+              key: "analysisUrgency",
+              header: "Urgency",
+              render: (value) => {
+                const urgency = String(value ?? "PENDING");
+                const styles: Record<string, string> = {
+                  HIGH: "bg-rose-50 text-rose-700",
+                  MEDIUM: "bg-amber-50 text-amber-700",
+                  LOW: "bg-emerald-50 text-emerald-700",
+                  PENDING: "bg-slate-100 text-slate-700"
+                };
+                return (
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                      styles[urgency] ?? "bg-slate-100 text-slate-700"
+                    }`}
+                  >
+                    {urgency}
+                  </span>
+                );
+              }
+            },
+            {
+              key: "analysisStatus",
+              header: "AI Status",
               render: (value) => {
                 const status = String(value);
                 const styles: Record<string, string> = {
                   COMPLETED: "bg-emerald-50 text-emerald-700",
                   PENDING: "bg-amber-50 text-amber-700",
-                  CANCELLED: "bg-rose-50 text-rose-700"
+                  FAILED: "bg-rose-50 text-rose-700"
                 };
                 return (
                   <span
@@ -136,6 +176,11 @@ export default function AdminConsultRealtime({ initialConsults }: AdminConsultRe
                   </span>
                 );
               }
+            },
+            {
+              key: "createdAt",
+              header: "Created At",
+              render: (value) => formatDate(String(value))
             }
           ]}
         />

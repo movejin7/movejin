@@ -7,6 +7,10 @@ type Consult = {
   description: string;
   status: "PENDING" | "COMPLETED" | "CANCELLED";
   createdAt: string;
+  analysisCategory: string | null;
+  analysisSummary: string | null;
+  analysisUrgency: "LOW" | "MEDIUM" | "HIGH" | null;
+  analysisStatus: "PENDING" | "COMPLETED" | "FAILED";
 };
 
 async function getConsults(): Promise<Consult[]> {
@@ -40,7 +44,7 @@ export default async function AdminPage() {
           <p className="text-sm font-medium text-brand-600">Admin</p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">Consult Dashboard</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Track consult performance and review the latest consult list in real time.
+            Track consult performance, AI analysis, and the latest consult list in real time.
           </p>
         </header>
 

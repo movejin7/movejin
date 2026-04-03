@@ -16,3 +16,12 @@ export function emitNewConsult(consult: unknown) {
 
   io.emit("new-consult", consult);
 }
+
+export function emitConsultUpdated(consult: unknown) {
+  const io = getSocketServer();
+  if (!io) {
+    return;
+  }
+
+  io.emit("consult-updated", consult);
+}
