@@ -1,41 +1,55 @@
-import { headers } from "next/headers";
-import AdminConsultRealtime from "@/components/AdminConsultRealtime";
+import KpiCard from "@/components/KpiCard";
+import Table from "@/components/Table";
 
 type Consult = {
   id: string;
+  patientName: string;
+  doctor: string;
   category: string;
-  description: string;
-  status: "PENDING" | "COMPLETED" | "CANCELLED";
+  status: "Completed" | "Pending" | "Cancelled";
   createdAt: string;
-  analysisCategory: string | null;
-  analysisSummary: string | null;
-  analysisUrgency: "LOW" | "MEDIUM" | "HIGH" | null;
-  analysisStatus: "PENDING" | "COMPLETED" | "FAILED";
 };
 
-async function getConsults(): Promise<Consult[]> {
-  const headerStore = headers();
-  const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
-  const protocol = headerStore.get("x-forwarded-proto") ?? "http";
-
-  if (!host) {
-    return [];
+const consults: Consult[] = [
+  {
+    id: "C-1201",
+    patientName: "Ava Thompson",
+    doctor: "Dr. Lee",
+    category: "General",
+    status: "Completed",
+    createdAt: "2026-04-03 09:10"
+  },
+  {
+    id: "C-1202",
+    patientName: "Noah Kim",
+    doctor: "Dr. Johnson",
+    category: "Dermatology",
+    status: "Pending",
+    createdAt: "2026-04-03 10:00"
+  },
+  {
+    id: "C-1203",
+    patientName: "Emma Chen",
+    doctor: "Dr. Patel",
+    category: "Cardiology",
+    status: "Completed",
+    createdAt: "2026-04-03 10:30"
+  },
+  {
+    id: "C-1204",
+    patientName: "Lucas Garcia",
+    doctor: "Dr. Lee",
+    category: "General",
+    status: "Cancelled",
+    createdAt: "2026-04-03 11:20"
   }
+];
 
-  const response = await fetch(`${protocol}://${host}/api/consult`, {
-    method: "GET",
-    cache: "no-store"
-  });
-
-  if (!response.ok) {
-    return [];
-  }
-
-  return (await response.json()) as Consult[];
-}
-
-export default async function AdminPage() {
-  const consults = await getConsults();
+export default function AdminPage() {
+  const totalConsults = consults.length;
+  const completionRate = `${Math.round(
+    (consults.filter((consult) => consult.status === "Completed").length / totalConsults) * 100
+  )}%`;
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-8 md:px-10">
@@ -43,12 +57,64 @@ export default async function AdminPage() {
         <header>
           <p className="text-sm font-medium text-brand-600">Admin</p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">Consult Dashboard</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Track consult performance, AI analysis, and the latest consult list in real time.
-          </p>
+          <p className="mt-2 text-sm text-slate-600">Clean SaaS-style admin dashboard UI with KPI cards and table.</p>
         </header>
 
-        <AdminConsultRealtime initialConsults={consults} />
+        <section className="grid gap-4 md:grid-cols-2">
+          <KpiCard
+            label="Total Consults"
+            value={String(totalConsults)}
+            helperText="Today"
+            trend={{ value: "+8%", positive: true }}
+          />
+          <KpiCard
+            label="Completion Rate"
+            value={completionRate}
+            helperText="Completed consults vs total"
+            trend={{ value: "+4.2%", positive: true }}
+          />
+        </section>
+
+        <section>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900">Consult List</h2>
+            <span className="text-sm text-slate-500">Mock data</span>
+          </div>
+
+          <Table
+            rowKey="id"
+            data={consults}
+            columns={[
+              { key: "id", header: "Consult ID" },
+              { key: "patientName", header: "Patient" },
+              { key: "doctor", header: "Doctor" },
+              { key: "category", header: "Category" },
+              { key: "createdAt", header: "Created At" },
+              {
+                key: "status",
+                header: "Status",
+                render: (value) => {
+                  const status = String(value);
+                  const styles: Record<string, string> = {
+                    Completed: "bg-emerald-50 text-emerald-700",
+                    Pending: "bg-amber-50 text-amber-700",
+                    Cancelled: "bg-rose-50 text-rose-700"
+                  };
+
+                  return (
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                        styles[status] ?? "bg-slate-100 text-slate-700"
+                      }`}
+                    >
+                      {status}
+                    </span>
+                  );
+                }
+              }
+            ]}
+          />
+        </section>
       </div>
     </main>
   );
