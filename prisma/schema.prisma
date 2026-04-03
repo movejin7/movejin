@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ConsultStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum AnalysisStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model Consult {
+  id               String         @id @default(cuid())
+  category         String
+  description      String
+  status           ConsultStatus  @default(PENDING)
+  createdAt        DateTime       @default(now())
+  analysisCategory String?
+  analysisSummary  String?
+  analysisUrgency  String?
+  analysisStatus   AnalysisStatus @default(PENDING)
+}
